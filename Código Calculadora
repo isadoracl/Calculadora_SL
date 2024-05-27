@@ -1,0 +1,178 @@
+import java.util.Scanner;
+
+public class Main {
+    public static void main(String[] args) {
+        Scanner scanner = new Scanner(System.in);
+
+        boolean continuar = true;
+
+        while (continuar) {
+            System.out.println("Escolha uma opção:");
+            System.out.println("1. Cadastrar trabalhador");
+            System.out.println("2. Consultar endereço pelo CEP");
+            System.out.println("3. Mostrar todos os cadastrados");
+            System.out.println("4. Sair");
+            System.out.print("Opção: ");
+
+            int opcao = scanner.nextInt();
+            scanner.nextLine(); 
+
+            switch (opcao) {
+                case 1:
+                    Cadastrar.cadastrarTrabalhador();
+                    break;
+                case 2:
+                    Consultar.consultarEnderecoPeloCEP();
+                    break;
+                case 3:
+                    Mostrar.mostrarTodosCadastrados();
+                    break;
+                case 4:
+                    continuar = false;
+                    break;
+                default:
+                    System.out.println("Opção inválida. Tente novamente.");
+            }
+        }
+        scanner.close();
+    }
+}
+
+______________________________________________________________________________________________
+import java.util.Scanner;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+
+public class Cadastrar {
+    public static void cadastrarTrabalhador() {
+        Scanner scanner = new Scanner(System.in);
+        System.out.println("Informe os dados do trabalhador:");
+        System.out.print("Nome: ");
+        String nome = scanner.nextLine();
+    
+        System.out.print("Salário bruto: ");
+        double salarioBruto = scanner.nextDouble();
+
+        System.out.print("Desconto do INSS: ");
+        double descontoINSS = scanner.nextDouble();
+
+        System.out.print("Número de dependentes: ");
+        int numDependentes = scanner.nextInt();
+
+        System.out.print("Valor total de descontos para dedução de IRRF: ");
+        double descontoIRRF = scanner.nextDouble();
+        
+        double salarioLiquido = salarioBruto - descontoINSS - descontoIRRF;
+        
+        System.out.print("CPF: ");
+        String cpf = scanner.next();
+
+        System.out.print("CEP: ");
+        String cep = scanner.next();
+        scanner.nextLine();
+        
+        System.out.print("Endereço: ");
+        String endereco = scanner.next();
+        scanner.nextLine();
+        
+        System.out.print("Salário líquido: " + salarioLiquido);
+        
+
+File Adicionarfile = new File("trabalhador.txt");
+    try {
+      if (Adicionarfile.createNewFile())
+        System.out.println("Trabalhador adicionado" + "\n");
+      else
+        System.out.println("cpf já existe.");
+
+      FileWriter writer = new FileWriter(Adicionarfile, true);
+        writer.write(nome + ", ");
+        writer.write(salarioBruto+ ", ");
+        writer.write(descontoINSS + ", ");
+        writer.write(numDependentes + ", ");
+        writer.write(descontoIRRF + ", ");
+        writer.write(cpf + ", ");
+        writer.write(cep + ", ");
+        writer.write(endereco + "\n");
+        writer.close();
+
+      } catch (IOException e) {
+     System.out.println("Ocorreu um erro ao adicionar o trabalhador.");
+     e.printStackTrace();
+            }
+  }
+
+
+
+      }
+       
+______________________________________________________________________________________
+import java.io.IOException;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.util.Scanner;
+
+public class Consultar{
+public static String consultarEnderecoPeloCEP(String cep) {
+        String url = "https://viacep.com.br/ws/" + cep + "/json/";
+
+        try {
+            HttpURLConnection connection = (HttpURLConnection) new URL(url).openConnection();
+            connection.setRequestMethod("GET");
+
+            int responseCode = connection.getResponseCode();
+            if (responseCode == HttpURLConnection.HTTP_OK) {
+                Scanner scannerResponse = new Scanner(connection.getInputStream());
+                StringBuilder response = new StringBuilder();
+                while (scannerResponse.hasNextLine()) {
+                    response.append(scannerResponse.nextLine());
+                }
+                scannerResponse.close();
+
+                return extrairEnderecoCompleto(response.toString());
+            } else {
+                System.out.println("Erro ao consultar o serviço de CEP. Código de resposta: " + responseCode);
+            }
+        } catch (IOException e) {
+            System.out.println("Erro ao fazer a requisição HTTP: " + e.getMessage());
+        }
+        return "Endereço não encontrado";
+    }
+
+    public static String extrairEnderecoCompleto(String jsonResponse) {
+        JSONObject jsonObj = new JSONObject(jsonResponse);
+        String endereco = jsonObj.getString("logradouro") + ", " +
+                          jsonObj.getString("bairro") + ", " +
+                          jsonObj.getString("localidade") + " - " +
+                          jsonObj.getString("uf") + ", " +
+                          jsonObj.getString("cep");
+        return endereco;
+    }
+}
+
+___________________________________________________________________________________________
+import java.io.*;
+import java.util.Scanner;
+import java.util.List; 
+import java.io.File;
+
+public class Mostrar {
+    public static void mostrarTodosCadastrados() {
+        System.out.println("\n");
+        System.out.println(" Informações Cadastradas:");
+        System.out.println("*********************************");
+        try {
+            File TrabalhadoresFile = new File("trabalhadores.txt");
+            Scanner trabalhadoresScanner = new Scanner(TrabalhadoresFile);
+            while (trabalhadoresScanner.hasNextLine()) {
+                System.out.println(trabalhadoresScanner.nextLine());
+            }
+            trabalhadoresScanner.close();
+            System.out.println("*********************************");
+        } catch (IOException e) {
+            System.out.println("Ocorreu um erro ao exibir as informações cadastradas.");
+            e.printStackTrace();
+        }
+    }
+}
